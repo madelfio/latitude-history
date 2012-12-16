@@ -3,7 +3,7 @@ var clientId = '301314733328-olnt3kt29bqkcnkprh07ikls8kf7a4s0.apps.googleusercon
     scopes = 'https://www.googleapis.com/auth/latitude.all.best';
 
 var refresh_interval = 130,
-    max_runs = 1080,
+    max_runs = 1090,
     start_date = new Date(); //new Date(2012, 8, 30);
 
 //start_date = new Date(2012, 1, 3);
@@ -27,9 +27,9 @@ function color(place) {
     case 'Washington, DC, USA':
       return '#98df8a';
     case 'Richmond, VA, USA':
-      return '#ff7f0e';
-    case 'Chevy Chase, MD, USA':
       return '#aec7e8';
+    case 'Chevy Chase, MD, USA':
+      return '#ff7f0e';
     case 'Oakton, VA, USA':
       return '#1f77b4';
     case 'Chevy Chase Village, MD, USA':
@@ -291,6 +291,10 @@ function renderLegend(div, data) {
       .style('top', function(d, i) {return (i*20) + 'px';});
 
   entering.append('span')
+    .classed('legend-rank', true)
+    .classed('legend-info', true);
+
+  entering.append('span')
     .classed('legend-label', true)
     .classed('legend-info', true)
     .text(function(d) {return d.key;});
@@ -313,6 +317,9 @@ function renderLegend(div, data) {
 
   entries.select('span.legend-count')
     .text(function(d) {return d.value;});
+
+  entries.select('span.legend-rank')
+    .text(function(d, i) {return i + 1;});
 
   entries.exit().remove();
 }
