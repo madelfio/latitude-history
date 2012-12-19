@@ -7,6 +7,7 @@ var refresh_interval = 130,
     start_date = new Date(); //new Date(2012, 8, 30);
 
 //start_date = new Date(2012, 1, 3);
+window.onblur = function() {render();}
 
 var colorMap = d3.scale.ordinal()
     .range(['#2ca02c', '#ffbb78', '#ff9896', '#c5b0d5', '#e377c2',
