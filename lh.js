@@ -15,7 +15,7 @@ window.onblur = function() {render();}
 
 var colorMap = d3.scale.ordinal()
     .range(['#2ca02c', '#ffbb78', '#ff9896', '#c5b0d5', '#e377c2',
-      '#f7b6d2', '#7f7f7f', '#c7c7c7 ', '#bcbd22', '#dbdb8d', '#17becf',
+      '#f7b6d2', '#7f7f7f', '#c7c7c7 ', '#bcbd22', '#cbcb8d', '#17be6f',
       '#9edae5', '#393b79', '#5254a3', '#6b6ecf', '#9c9ede', '#637939',
       '#8ca252', '#b5cf6b', '#cedb9c', '#8c6d31', '#bd9e39', '#e7ba52',
       '#e7cb94', '#843c39', '#ad494a', '#d6616b', '#e7969c', '#7b4173',
