@@ -2,9 +2,13 @@ var clientId = '301314733328-olnt3kt29bqkcnkprh07ikls8kf7a4s0.apps.googleusercon
     apiKey = 'AIzaSyD2k1wVYzgPrbZRJUfBGoClFW0Z5BD6DC0',
     scopes = 'https://www.googleapis.com/auth/latitude.all.best';
 
-var refresh_interval = 130,
-    max_runs = 1090,
+var refresh_interval = 100,
+    max_runs = 1060,
+    //max_runs = 352,
     start_date = new Date(); //new Date(2012, 8, 30);
+
+var geocode_queue = queue(1, 2000),
+    latitude_queue = queue(1, 100);
 
 //start_date = new Date(2012, 1, 3);
 window.onblur = function() {render();}
@@ -18,8 +22,9 @@ var colorMap = d3.scale.ordinal()
       '#a55194', '#ce6dbd', '#de9ed6', '#3182bd', '#6baed6', '#9ecae1',
       '#c6dbef', '#e6550d', '#fd8d3c', '#fdae6b', '#fdd0a2', '#31a354',
       '#74c476', '#a1d99b', '#c7e9c0', '#756bb1', '#9e9ac8', '#bcbddc',
-      '#dadaeb', '#636363', '#969696', '#bdbdbd',
-      '#d9d9d9']);//d3.scale.category20(),
+      '#dadaeb', '#636363', '#969696', '#bdbdbd', '#d9d9d9', 'darkblue',
+      'darkgreen', 'crimson', 'darkmagenta', 'darkorange', 'darkorchid',
+      'darkturquoise', 'darkviolet']);
 
 function color(place) {
   switch (place) {
@@ -32,15 +37,17 @@ function color(place) {
     case 'Chevy Chase, MD, USA':
       return '#ff7f0e';
     case 'Oakton, VA, USA':
-      return '#1f77b4';
+      return '#1fb7b4';
     case 'Chevy Chase Village, MD, USA':
-      return '#d62728';
+      return 'gold';
     case 'Howard, MD, USA':
       return '#9467bd';
     case 'Vienna, VA, USA':
       return '#8c564b';
     case 'Corolla, NC, USA':
       return '#c49c94';
+    case 'College Park, MD, USA':
+      return 'lemonchiffon';
     default:
       return colorMap(place);
   }
@@ -89,8 +96,17 @@ function makeApiCall(date_range, callback) {
   });
 }
 
+// return 4am on the calendar day of the ts
 function floor4am(ts) {
   return d3.time.hour.offset(d3.time.day(ts),4);
+}
+
+function floor1pm(ts) {
+  return d3.time.hour.offset(d3.time.day(ts), 13);
+}
+
+function getTimeOfDay(ts, hrs) {
+  return d3.time.hour.offset(d3.time.day(ts), hrs);
 }
 
 var all_data = [];
@@ -106,7 +122,8 @@ function loadNext() {
     last_date = d3.min(all_data, function(d) {return d.date;});
     next_date = d3.time.day.offset(last_date, -1);
   }
-  next_date = floor4am(next_date);
+  //next_date = getTimeOfDay(next_date, +4);
+  next_date = getTimeOfDay(next_date, 15);
 
   // date_range goes from 1am to 8am of the date in question
   date_range = {
@@ -151,33 +168,55 @@ var google_geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json',
 var geocoder = new google.maps.Geocoder();
 
 function get_city_name(lat, lng) {
+  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3),
+      done;
+
+  if (!(loc_str in city_lookup)) {
+    city_lookup[loc_str] = {
+      place_name: loc_str,
+      done: false,
+      queued: true
+    };
+    //console.log('queuing ' + lat + ', ' + lng);
+    geocode_queue.defer(askGoogle, lat, lng);
+  } else if (!(city_lookup[loc_str].done) && !(city_lookup[loc_str].queued)) {
+    city_lookup[loc_str].queued = true;
+    //console.log('requeuing ' + lat + ', ' + lng);
+    geocode_queue.defer(askGoogle, lat, lng);
+  }
+
+  return city_lookup[loc_str].place_name;
+}
+
+function askGoogle(lat, lng, callback) {
   var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
-
-  if (!(loc_str in city_lookup) || city_lookup_full[loc_str] == 'OVER_QUERY_LIMIT') {
-    city_lookup[loc_str] = loc_str;
-
-    if (geocoder) {
-      var latlng = new google.maps.LatLng(lat, lng);
-      geocoder.geocode({latLng: latlng}, function(results, status) {
-        if (status == google.maps.GeocoderStatus.OK) {
-          city_lookup_full[loc_str] = results.map(function(d) {return d.formatted_address;});
-          for (var i=0; i < results.length; i++) {
-            if (/^[^,]*, \w*,[^,]*$/.test(results[i].formatted_address)) {
-              city_lookup[loc_str] = results[i].formatted_address;
-              render();
-              break;
-            }
-          }
-        } else {
-          city_lookup_full[loc_str] = status;
-          if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-            setTimeout(function() {get_city_name(lat, lng);}, 1000);
+  if (loc_str in city_lookup && city_lookup[loc_str].done) {
+    return;
+  }
+  if (geocoder) {
+    var latlng = new google.maps.LatLng(lat, lng);
+    //console.log('asking Google about ' + lat + ', ' + lng);
+    geocoder.geocode({latLng: latlng}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        for (var i=0; i < results.length; i++) {
+          if (/^[^,]*, \w*,[^,]*$/.test(results[i].formatted_address)) {
+            city_lookup[loc_str].place_name = results[i].formatted_address;
+            city_lookup[loc_str].done = true;
+            render();
+            break;
           }
         }
-      });
-    }
+      } else {
+        console.log('Response: ' + status);
+        city_lookup[loc_str].error = status;
+        if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+          setTimeout(function() {get_city_name(lat, lng);}, 10000);
+        }
+      }
+      city_lookup[loc_str].queued = false;
+      callback();
+    });
   }
-  return city_lookup[loc_str];
 }
 
 //
@@ -206,7 +245,7 @@ var day = d3.time.format('%w'),
     format = d3.time.format('%Y-%m-%d');
 var width = 960,
     height = 136,
-    cellSize = 17;
+    cellSize = 15;
 
 function renderCalendar(div, data) {
 
@@ -272,15 +311,17 @@ function monthPath(t0) {
 
 
 function renderLegend(div, data) {
-  var data_lookup = d3.nest()
+  var margin = 5,
+      data_lookup = d3.nest()
       .key(function(d) {return d.place_name;})
       .rollup(function(d) {return d.length;})
       .map(data),
       sorted_data = d3.entries(data_lookup).sort(function(a,b) {
         return b.value < a.value ? -1 : b.value > a.value ? 1 : 0;
-      });
+      }),
+      x = d3.scale.linear().range([margin, margin+20]);
 
-  div.transition().style('height', 20*sorted_data.length + 'px');
+  div.transition().style('height', (x(sorted_data.length) + margin) + 'px');
 
   var entries = div.selectAll('div.legend')
       .data(sorted_data, function(d) {return d.key;});
@@ -289,7 +330,7 @@ function renderLegend(div, data) {
     .append('div')
       .classed('legend', true)
       .style('color', '#fff')
-      .style('top', function(d, i) {return (i*20) + 'px';});
+      .style('top', function(d, i) {return x(i) + 'px';});
 
   entering.append('span')
     .classed('legend-rank', true)
@@ -313,7 +354,7 @@ function renderLegend(div, data) {
 
   entries
     .transition()
-    .style('top', function(d, i) {return (i*20) + 'px';})
+    .style('top', function(d, i) {return x(i) + 'px';})
     .style('color', '#333');
 
   entries.select('span.legend-count')
