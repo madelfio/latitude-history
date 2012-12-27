@@ -25,7 +25,7 @@
         if (tail) tail.next = node, tail = tail.next;
         else head = tail = node;
         ++remaining;
-        pop();
+        timer();
       }
       return queue;
     };
@@ -65,12 +65,31 @@
             notify();
           } else {
             results[i] = r;
-            if (--remaining) pop();
-            else notify();
           }
         });
-        setTimeout(f.apply(null, a), popdelay);
+        f.apply(null, a);
       }
+    }
+
+    function setVaryingInterval(callback) {
+      return setTimeout(function() {
+        setVaryingInterval(callback);
+        callback();
+      }, popdelay);
+    }
+
+    function timer() {
+      if (timeout) {return;}
+      timeout = setVaryingInterval(function() {
+        if (remaining--) {
+          pop();
+        }
+        if (remaining <= 0) {
+          clearTimeout(timeout);
+          timeout = null;
+          notify();
+        }
+      });
     }
 
     function notify() {
