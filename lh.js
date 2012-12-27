@@ -84,8 +84,14 @@ function handleAuthClick(event) {
   return false;
 }
 
+var latitude_api_loaded = false;
 function makeApiCall(date_range, callback) {
-  gapi.client.load('latitude', 'v1', function() {
+  if (!latitude_api_loaded) {
+    gapi.client.load('latitude', 'v1', function() {
+      latitude_api_loaded = true;
+      makeApiCall(date_range, callback);
+    });
+  } else {
     var request = gapi.client.latitude.location.list({
       'granularity': 'best',
       'max-results':'1000',
