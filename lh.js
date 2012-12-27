@@ -317,7 +317,8 @@ function renderLegend(div, data) {
       .rollup(function(d) {return d.length;})
       .map(data),
       sorted_data = d3.entries(data_lookup).sort(function(a,b) {
-        return b.value < a.value ? -1 : b.value > a.value ? 1 : 0;
+        return (b.value < a.value ? -1 : b.value > a.value ? 1 :
+                b.key < a.key ? 1 : b.key > a.key ? -1 : 0);
       }),
       x = d3.scale.linear().range([margin, margin+20]);
 
