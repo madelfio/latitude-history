@@ -13,7 +13,10 @@
         error = null,
         results = [],
         await = noop,
-        awaitAll;
+        awaitAll,
+        timeout,
+        popIncrease = 1.2,
+        popDecrease = 1.1;
 
     if (arguments.length < 1) parallelism = Infinity;
     if (arguments.length < 2) popdelay = 0;
@@ -62,6 +65,7 @@
             // setting error ignores subsequent calls to defer
             error = e;
             remaining = results = head = tail = null;
+            console.log('ERROR!' + error);
             notify();
           } else {
             results[i] = r;
@@ -96,6 +100,23 @@
       if (error != null) await(error);
       else if (awaitAll) await(null, results);
       else await.apply(null, [null].concat(results));
+    }
+
+    queue.popdelay = function(_) {
+      if (!arguments.length) return popdelay;
+      popdelay = _;
+      return queue;
+    }
+
+    queue.popincrease = function() {
+      popdelay *= popIncrease;
+      return popIncrease;
+    }
+
+    queue.popdecrease = function() {
+      popDecrease = Math.pow(popDecrease, .99);
+      popdelay /= popDecrease;
+      return popDecrease;
     }
 
     return queue;
