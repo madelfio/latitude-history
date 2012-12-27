@@ -99,18 +99,10 @@ function makeApiCall(date_range, callback) {
       'max-time': +date_range.max_date
     });
     request.execute(callback);
-  });
+  };
 }
 
-// return 4am on the calendar day of the ts
-function floor4am(ts) {
-  return d3.time.hour.offset(d3.time.day(ts),4);
-}
-
-function floor1pm(ts) {
-  return d3.time.hour.offset(d3.time.day(ts), 13);
-}
-
+// return specified time-of-day on the calendar day of the ts
 function getTimeOfDay(ts, hrs) {
   return d3.time.hour.offset(d3.time.day(ts), hrs);
 }
