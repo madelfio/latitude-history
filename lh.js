@@ -166,53 +166,53 @@ var google_geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json',
 var geocoder = new google.maps.Geocoder();
 
 function get_city_name(lat, lng) {
-  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3),
-      done;
-
+  // return city_name for lat/lng if available
+  // if not, enqueue geocoding request if lat/lng is not already in the queue
+  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
   if (!(loc_str in city_lookup)) {
-    city_lookup[loc_str] = {
-      place_name: loc_str,
-      done: false,
-      queued: true
-    };
-    //console.log('queuing ' + lat + ', ' + lng);
+    city_lookup[loc_str] = {place_name: loc_str, done: false, queued: true};
     geocode_queue.defer(askGoogle, lat, lng);
   } else if (!(city_lookup[loc_str].done) && !(city_lookup[loc_str].queued)) {
     city_lookup[loc_str].queued = true;
-    //console.log('requeuing ' + lat + ', ' + lng);
     geocode_queue.defer(askGoogle, lat, lng);
   }
-
   return city_lookup[loc_str].place_name;
 }
 
-function askGoogle(lat, lng, callback) {
+var address_match = /^\w[^,]*, \w*,[^,]*$/;
+
+function handleGeocodeResults(lat, lng, results, status, callback) {
   var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
-  if (loc_str in city_lookup && city_lookup[loc_str].done) {
-    return;
+  if (status == google.maps.GeocoderStatus.OK) {
+    geocode_queue.popdecrease();
+    for (var i=0; i < results.length; i++) {
+      if (address_match.test(results[i].formatted_address)) {
+        city_lookup[loc_str].place_name = results[i].formatted_address;
+        city_lookup[loc_str].done = true;
+        render();
+        break;
+      }
+    }
+  } else {
+    geocode_queue.popincrease();
+    console.log('Response: ' + status);
+    city_lookup[loc_str].error = status;
+    if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+      setTimeout(function() {get_city_name(lat, lng);}, 10000);
+    }
   }
+  city_lookup[loc_str].queued = false;
+  callback();
+}
+
+function askGoogle(lat, lng, callback) {
+  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3),
+      loc_str_is_done = (loc_str in city_lookup && city_lookup[loc_str].done);
+  if (loc_str_is_done) return;
   if (geocoder) {
     var latlng = new google.maps.LatLng(lat, lng);
-    //console.log('asking Google about ' + lat + ', ' + lng);
     geocoder.geocode({latLng: latlng}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        for (var i=0; i < results.length; i++) {
-          if (/^[^,]*, \w*,[^,]*$/.test(results[i].formatted_address)) {
-            city_lookup[loc_str].place_name = results[i].formatted_address;
-            city_lookup[loc_str].done = true;
-            render();
-            break;
-          }
-        }
-      } else {
-        console.log('Response: ' + status);
-        city_lookup[loc_str].error = status;
-        if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-          setTimeout(function() {get_city_name(lat, lng);}, 10000);
-        }
-      }
-      city_lookup[loc_str].queued = false;
-      callback();
+      handleGeocodeResults(lat, lng, results, status, callback);
     });
   }
 }
