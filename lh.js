@@ -259,7 +259,7 @@ function get_city_name(lat, lng) {
   return city_lookup[loc_str].place_name;
 }
 
-var address_match = /^\w[^,]*, \w*,[^,]*$/;
+var address_match = /^\D[^,]*, \w*,[^,]*$/;
 
 function handleGeocodeResults(lat, lng, results, status, callback) {
   var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
