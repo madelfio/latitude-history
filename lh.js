@@ -138,23 +138,78 @@ function loadNext() {
   });
 }
 
+(function() {
+
+var _target_date;
+
+function timeToTarget(ts) {return Math.abs(+ts-(+_target_date));}
+
+function topK(array, k, cmp) {
+  var arr = array.slice();
+  arr.sort(cmp);
+  return arr.slice(0, k);
+}
+
+function tttOrder(a, b) {
+  var ad = timeToTarget(a.ts),
+      bd = timeToTarget(b.ts);
+  return ad < bd ? -1 : ad > bd ? 1 : 0;
+}
+
+function weightedCentroid(pts, weightFn) {
+  var n = pts.length,
+      totalWt = 0.0,
+      totalLat = 0.0
+      totalLng = 0.0;
+  for (var i=0; i < n; i++) {
+    var wt = weightFn(pts[i]),
+        lat = pts[i].lat,
+        lng = pts[i].lng;
+    totalWt += wt;
+    totalLat += wt*lat;
+    totalLng += wt*lng;
+  }
+  return {lat:totalLat/totalWt, lng:totalLng/totalWt};
+}
+
+function nearestNeighbor(q, pts) {
+  function sqr_dist(a, b) {
+    return (a.lat-b.lat)*(a.lat-b.lat) + (a.lng-b.lng)*(a.lng-b.lng);
+  }
+  return pts.reduce(function(p, v) {
+    var qp = sqr_dist(q, p),
+        qv = sqr_dist(q, v);
+    return qp < qv ? p :
+           qp > qv ? v :
+           timeToTarget(p.ts) < timeToTarget(v.ts) ? p :
+           q;
+  });
+}
+
+window.representative = function(data, target_date) {
+  _target_date = target_date;
+  var candidates = topK(data, 5, tttOrder);
+  var centroid = weightedCentroid(candidates, function (d) {
+        return timeToTarget(d.timestampMs) + 10*60*1000;
+      });
+  return nearestNeighbor(centroid, candidates);
+}
+})();
+
 function handleNewData(resp, target_date) {
   if (!('items' in resp) || resp.items.length === 0) {
     all_data.push({date: target_date});
     return;
   }
-  var raw_result = d3.first(resp.items, function(a, b) {
-        var ad = Math.abs(+a.timestampMs-(+target_date)),
-            bd = Math.abs(+b.timestampMs-(+target_date));
-        return ad < bd ? -1 : ad > bd ? 1 : 0;
-      }),
-      result = {
-        date: target_date,
-        lat: raw_result.latitude,
-        lng: raw_result.longitude
-      };
-  result.date = target_date;
-  all_data.push(result);
+  for (var i=0; i<resp.items.length; i++) {
+    var cur = resp.items[i];
+    cur.ts = cur.timestampMs;
+    cur.lat = cur.latitude;
+    cur.lng = cur.longitude;
+  }
+  var rep = representative(resp.items, target_date);
+  rep.date = target_date;
+  all_data.push(rep);
   render();
 }
 
