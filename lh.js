@@ -3,7 +3,8 @@ var clientId = '301314733328-olnt3kt29bqkcnkprh07ikls8kf7a4s0.apps.googleusercon
     scopes = 'https://www.googleapis.com/auth/latitude.all.best';
 
 var refresh_interval = 100,
-    max_runs = 1060,
+    running = true,
+    max_runs = 1070,
     //max_runs = 352,
     start_date = new Date(); //new Date(2012, 8, 30);
 
@@ -113,7 +114,7 @@ function loadNext() {
   var last_date,
       next_date,
       date_range;
-  if (all_data.length >= max_runs) {return;}
+  if (all_data.length >= max_runs) {return pauseLatitudeLoading();}
   if (all_data.length === 0) {
     next_date = start_date;
   } else {
@@ -131,7 +132,9 @@ function loadNext() {
 
   makeApiCall(date_range, function(resp) {
     handleNewData(resp, next_date);
-    timeout = setTimeout(loadNext, refresh_interval)
+    if (running) {
+      timeout = setTimeout(loadNext, refresh_interval)
+    }
   });
 }
 
@@ -154,6 +157,28 @@ function handleNewData(resp, target_date) {
   all_data.push(result);
   render();
 }
+
+function pauseLatitudeLoading() {
+  console.log('got here');
+  $('#pause').hide();
+  clearTimeout(timeout);
+  timeout = null;
+  running = false;
+  $('#start').show();
+  return false;
+}
+$('#pause').click(function() {pauseLatitudeLoading();});
+
+function startLatitudeLoading() {
+  console.log('got here');
+  $('#start').hide();
+  if (all_data.length >= max_runs) {max_runs += 10;}
+  running = true;
+  timeout = setTimeout(loadNext, refresh_interval);
+  $('#pause').show();
+  return false;
+}
+$('#start').click(function() {startLatitudeLoading();});
 
 //
 // Reverse Geocoding
