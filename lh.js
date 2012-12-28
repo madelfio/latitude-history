@@ -214,7 +214,6 @@ function handleNewData(resp, target_date) {
 }
 
 function pauseLatitudeLoading() {
-  console.log('got here');
   $('#pause').hide();
   clearTimeout(timeout);
   timeout = null;
@@ -225,7 +224,6 @@ function pauseLatitudeLoading() {
 $('#pause').click(function() {pauseLatitudeLoading();});
 
 function startLatitudeLoading() {
-  console.log('got here');
   $('#start').hide();
   if (all_data.length >= max_runs) {max_runs += 10;}
   running = true;
