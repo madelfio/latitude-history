@@ -190,7 +190,7 @@ window.representative = function(data, target_date) {
   _target_date = target_date;
   var candidates = topK(data, 5, tttOrder);
   var centroid = weightedCentroid(candidates, function (d) {
-        return timeToTarget(d.timestampMs) + 10*60*1000;
+        return 60 * 1000 / (timeToTarget(d.timestampMs) + 10*60*1000) / ('accuracy' in d ? +d.accuracy : 1000);
       });
   return nearestNeighbor(centroid, candidates);
 }
