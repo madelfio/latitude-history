@@ -399,6 +399,9 @@ function monthPath(t0) {
     + "H" + (w0 + 1) * cellSize + "Z";
 }
 
+function isLatLng(s) {
+  return s.split(',').length === 2;
+}
 
 function renderLegend(div, data) {
   var margin = 5,
@@ -408,6 +411,8 @@ function renderLegend(div, data) {
       .map(data),
       sorted_data = d3.entries(data_lookup).sort(function(a,b) {
         return (b.value < a.value ? -1 : b.value > a.value ? 1 :
+                isLatLng(b.key) && !isLatLng(a.key) ? -1 :
+                !isLatLng(b.key) && isLatLng(a.key) ? 1 :
                 b.key < a.key ? 1 : b.key > a.key ? -1 : 0);
       }),
       x = d3.scale.linear().range([margin, margin+20]);
