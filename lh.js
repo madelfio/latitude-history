@@ -243,10 +243,15 @@ var google_geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json',
 
 var geocoder = new google.maps.Geocoder();
 
+var toLocStr = function(lat, lng, precision) {
+  if (arguments.length < 3) {precision = 2;}
+  return lat.toFixed(precision).toString() + ',' + lng.toFixed(precision);
+};
+
 function get_city_name(lat, lng) {
   // return city_name for lat/lng if available
   // if not, enqueue geocoding request if lat/lng is not already in the queue
-  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
+  var loc_str = toLocStr(lat, lng);
   if (!(loc_str in city_lookup)) {
     city_lookup[loc_str] = {place_name: loc_str, done: false, queued: true};
     geocode_queue.defer(askGoogle, lat, lng);
@@ -260,7 +265,7 @@ function get_city_name(lat, lng) {
 var address_match = /^\D[^,]*, \w*,[^,]*$/;
 
 function handleGeocodeResults(lat, lng, results, status, callback) {
-  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3);
+  var loc_str = toLocStr(lat, lng);
   if (status == google.maps.GeocoderStatus.OK) {
     geocode_queue.popdecrease();
     for (var i=0; i < results.length; i++) {
@@ -284,7 +289,7 @@ function handleGeocodeResults(lat, lng, results, status, callback) {
 }
 
 function askGoogle(lat, lng, callback) {
-  var loc_str = lat.toFixed(3).toString() + ',' + lng.toFixed(3),
+  var loc_str = toLocStr(lat, lng),
       loc_str_is_done = (loc_str in city_lookup && city_lookup[loc_str].done);
   if (loc_str_is_done) return;
   if (geocoder) {
