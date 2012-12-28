@@ -342,9 +342,18 @@ function renderCalendar(div, data) {
       .attr('transform', 'translate(' + ((width - cellSize * 53) / 2) + ',' + (height - cellSize * 7 - 1) + ')');
 
   svg.append('text')
-    .attr('transform', 'translate(-6,' + cellSize * 3.5 + ')rotate(-90)')
+    .attr('transform', 'translate(-28,' + cellSize * 3.5 + ')rotate(-90)')
     .style('text-anchor', 'middle')
     .text(function(d) {return d;});
+
+  svg.append('g')
+      .attr('transform', 'translate(-12,' + cellSize * .75 + ')')
+      .attr('fill', '#666')
+    .selectAll('text').data('Su,M,T,W,Th,F,S'.split(',')).enter().append('text')
+      .attr('transform', function(d,i) {return 'translate(0,' + cellSize * i + ')';})
+      .style('text-anchor', 'middle')
+      .style('font-size', '10pt')
+      .text(function(d) {return d;});
 
   var rect = svg.selectAll('.day')
       .data(function(d) { return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
