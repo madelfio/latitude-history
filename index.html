@@ -4,55 +4,39 @@
     <style>
       @import url(https://fonts.googleapis.com/css?family=Fjalla+One);
       body {
-        shape-rendering: crispEdges;
+        margin-top: 0px;
         background-color: #ddd;
-        margin-top:0px;
+        shape-rendering: crispEdges;
       }
-      h1 {
-        font-family: "Fjalla One", sans-serif;
-        text-align: center;
-      }
+      h1 {text-align: center; font-family: "Fjalla One", sans-serif;}
       #container {
-        width:1000px;
         margin: 0px auto;
+        padding: 10px;
+        width: 1000px;
         background-color: #fff;
-        padding:10px;
-        box-shadow:0 0 25px #777;
+        box-shadow: 0 0 25px #777;
         border-left: 1px solid #444;
         border-right: 1px solid #444;
       }
-      .day {
-        /*fill: #fff;*/
-        stroke: #dadada;
-      }
-      .month {
-        fill: none;
-        stroke: #000;
-        stroke-width: 2px;
-      }
+      .day {stroke: #dadada;}
+      .month {fill: none; stroke: #000; stroke-width: 2px;}
       #legend {
-        position:relative;
-        width: 375px;
+        position: relative;
+        overflow: hidden;
         margin: 10px auto;
+        width: 375px;
         border: 1px solid #666;
+        border-radius: 4px;
         box-shadow: 5px 5px 5px #aaa;
-        overflow:hidden;
-        border-radius:4px;
       }
-      .legend { position:absolute; }
-      .legend-info {display:inline-block; padding-right:5px; white-space:nowrap}
-      .legend-rank {width: 30px; text-align:right;}
-      .legend-label {width: 220px; overflow:hidden;}
-      .legend-count {width: 30px; text-align:right;}
+      .legend {position: absolute;}
+      .legend-info {display: inline-block; padding-right: 5px; white-space: nowrap}
+      .legend-rank {width: 30px; text-align: right;}
+      .legend-label {overflow: hidden; width: 220px;}
+      .legend-count {width: 30px; text-align: right;}
       .legend-color {width: 40px;}
-      #listing {
-        font-size: 90%;
-        font-family:monospace;
-        color:#777;
-      }
-      #controls {
-        float:right;
-      }
+      #listing {color: #777; font-size: 90%; font-family: monospace;}
+      #controls {float: right;}
     </style>
   </head>
   <div id="container">
