@@ -44,7 +44,7 @@ function color(place) {
     case 'Howard, MD, USA':
       return '#9467bd';
     case 'Vienna, VA, USA':
-      return '#8c564b';
+      return '#C76';
     case 'Corolla, NC, USA':
       return '#c49c94';
     case 'College Park, MD, USA':
